@@ -1,0 +1,24 @@
+{
+  "model": "clef-flash-q8:latest",
+  "state": "Checkout has been failing for every customer for the last hour. Orders are blocked.",
+  "questions": {
+    "urgent": {
+      "type": "noul",
+      "instructions": "Is this an urgent service outage?"
+    },
+    "team": {
+      "type": "choice",
+      "instructions": "Which team should handle this request?",
+      "criteria": {
+        "billing": "Payments, invoices, and refunds",
+        "technical": "Outages, software errors, and configuration",
+        "sales": "Plans and upgrades"
+      }
+    },
+    "severity": {
+      "type": "score",
+      "instructions": "How severe is the customer impact?",
+      "criteria": ["No impact", "Minor", "Major", "Critical"]
+    }
+  }
+}

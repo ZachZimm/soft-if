@@ -1,6 +1,8 @@
 # soft-if — implementation plan
 
-Status: plan only, nothing implemented. Written 17 Oct 2026.
+Status: M0–M6 implemented and validated on 17 Oct 2026. See `README.md`,
+`CONTRACT.md`, and `VALIDATION.md` for integration decisions, test results,
+and deployment measurements that require real usage or the lab Clef endpoint.
 Sibling consumer: `../soft-launcher`.
 
 ## 1. Goal

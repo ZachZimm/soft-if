@@ -1,0 +1,9 @@
+{
+  "model": "clef-flash-q8:latest",
+  "answers": {
+    "urgent": { "type": "noul", "noul": 0.9462759244930722 },
+    "team": { "type": "choice", "choice": "technical", "probabilities": { "billing": 0.05821089610459834, "sales": 0.018119951260696043, "technical": 0.9236691526347057 }, "confidence": 0.8855037289520584 },
+    "severity": { "type": "score", "score": 2.791866416025877, "legend": { "0": "No impact", "1": "Minor", "2": "Major", "3": "Critical" }, "probabilities": { "0": 0.0172960375585473, "1": 0.015157733163034095, "2": 0.12593000497241244, "3": 0.841616224306006 }, "confidence": 0.7918664160258775 }
+  },
+  "usage": { "input_tokens": 352, "output_tokens": 0 }
+}

@@ -1,0 +1,8 @@
+{
+  "bands": { "act": 0.85, "confirm": 0.6 },
+  "branches": {
+    "launcher.file": { "threshold": 0.8, "timeoutMs": 400, "fallback": false },
+    "launcher.action": { "fallback": "other" }
+  },
+  "allowEmulated": false
+}

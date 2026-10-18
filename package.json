@@ -1,0 +1,41 @@
+{
+  "name": "soft-if",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Typed model decisions with policy, logs, replay and calibration",
+  "engines": {
+    "node": ">=26 <27"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    },
+    "./node": {
+      "types": "./dist/src/node.d.ts",
+      "default": "./dist/src/node.js"
+    }
+  },
+  "bin": {
+    "softif": "./dist/src/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CONTRACT.md"
+  ],
+  "scripts": {
+    "build": "tsc && node scripts/copy-page.mjs",
+    "test": "pnpm build && node --test test/*.test.mjs test/acceptance/*.test.mjs",
+    "softif": "node dist/src/cli.js",
+    "bench": "pnpm build && node dist/src/cli.js bench",
+    "example": "pnpm build && node dist/examples/keystroke-loop.js",
+    "format": "prettier --write src/**/*.ts src/*.ts examples/*.ts test/*.test.mjs README.md CONTRACT.md"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "@types/node": "^26.0.0",
+    "prettier": "^3.6.2"
+  }
+}
