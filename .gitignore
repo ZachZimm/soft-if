@@ -6,3 +6,19 @@ dist/
 *.db-shm
 policy.local.json
 .env
+
+# Local credentials and environment overrides
+.env.*
+!.env.example
+*.pem
+*.key
+api-key*.txt
+secrets/
+
+# Local backend profiles and runtime artifacts
+backends.local.json
+*.local.json
+*.log
+*.tgz
+coverage/
+.DS_Store

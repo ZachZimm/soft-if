@@ -31,11 +31,20 @@
     "softif": "node dist/src/cli.js",
     "bench": "pnpm build && node dist/src/cli.js bench",
     "example": "pnpm build && node dist/examples/keystroke-loop.js",
-    "format": "prettier --write src/**/*.ts src/*.ts examples/*.ts test/*.test.mjs README.md CONTRACT.md"
+    "format": "prettier --write src/**/*.ts src/*.ts examples/*.ts test/*.test.mjs README.md CONTRACT.md",
+    "prepack": "pnpm build"
   },
   "devDependencies": {
     "typescript": "^5.9.3",
     "@types/node": "^26.0.0",
     "prettier": "^3.6.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ZachZimm/soft-if.git"
+  },
+  "homepage": "https://github.com/ZachZimm/soft-if#readme",
+  "bugs": {
+    "url": "https://github.com/ZachZimm/soft-if/issues"
   }
 }

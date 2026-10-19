@@ -8,11 +8,12 @@ The package has no runtime dependencies. The root entry works in browsers.
 `soft-if/node` adds SQLite, file policies, the HTTP debugger, and replay.
 Node 26 and pnpm 9 are required for development and Node tools.
 
-## Run it
+## Install and run
 
 ```bash
+git clone https://github.com/ZachZimm/soft-if.git
 cd soft-if
-pnpm install
+pnpm install --frozen-lockfile
 pnpm build
 pnpm softif ask --backend fake --state 'Find budget.pdf' \
   --noul 'local=Is the user searching for a local file?' \
@@ -21,15 +22,29 @@ pnpm example
 pnpm test
 ```
 
-For the existing local Clef server, omit `--backend fake`. The default is
-`http://127.0.0.1:11434/v1/systemone` with model `clef-flash-q8:latest`.
-This is the 4K-context alias documented in `../clef-flash-server/README.md`.
-The original plan's `clef-flash:9b-q8_0` tag has a larger context and different
-memory use. Override the model with `--model` when needed.
+The commands above use offline fake backends. For a running Ollama server with
+System One support, omit `--backend fake`. The default endpoint is
+`http://127.0.0.1:11434/v1/systemone` and the default model is
+`clef-flash-q8:latest`. This is a deployment-specific alias, so pass `--model`
+with a model installed on your server. For llama.cpp, use `--backend llamacpp`
+and optionally `--url http://localhost:8080`.
 
-Add this package to a consumer with `pnpm add soft-if@link:../soft-if` after building
-it. In an existing pnpm workspace, use `"soft-if": "workspace:*"`. The build emits
-ESM JavaScript, declarations, and source maps into `dist/`.
+The build emits ESM JavaScript, declarations, and source maps into `dist/`.
+Build before installing this package into another project. With `soft-launcher`
+cloned alongside `soft-if`, run this in the launcher directory:
+
+```bash
+pnpm add 'soft-if@file:../soft-if'
+```
+
+Its `package.json` dependency should read `"soft-if": "file:../soft-if"`.
+The same layout works for another consumer. Both repositories can remain
+independent; no parent workspace configuration is needed. Rebuild `soft-if` and
+refresh the consumer's file dependency after library changes. In a shared pnpm
+workspace, `"soft-if": "workspace:*"` is also supported.
+
+To create a tarball for a separate consumer, run `pnpm pack`, then install the
+resulting `.tgz` file there. Packing builds the package first.
 
 ## Browser core
 
@@ -197,15 +212,28 @@ const backend = tiered(
   [
     ollama(),
     openaiEmulated({
-      url: "http://127.0.0.1:9090/v1",
-      model: "bonsai-2-27b",
-      apiKeyFile: "~/.config/soft-if/api-key.txt",
+      url: process.env.BONSAI_URL ?? "http://localhost:9090/v1",
+      model: process.env.BONSAI_MODEL ?? "bonsai-2-27b",
+      apiKeyFile: process.env.BONSAI_API_KEY_FILE,
       thinking: false,
     }),
   ],
   { policy, escalateBelow: "confirm", tierTimeoutMs: 5000 },
 );
 ```
+
+Set `BONSAI_URL` to the OpenAI-compatible base URL, including `/v1`, and
+`BONSAI_API_KEY_FILE` to a key file outside the checkout if authentication is
+required. The example defaults to `http://localhost:9090/v1`; it does not start a
+server. `BONSAI_MODEL` overrides the model. `examples/tiered.ts` uses fake backends
+unless `SOFTIF_LIVE=1` is set.
+
+The CLI accepts the same environment variables for `--backend bonsai` or
+`--backend openai`. `--url`, `--model`, and `--api-key-file` override their
+respective environment settings. It also accepts `OPENAI_API_KEY`, which takes
+precedence over a key file. Named backend profile URL/model values override the
+environment and are overridden by explicit flags. Keep credentials out of tracked
+profiles.
 
 Use the same policy in `tiered` and `SoftIf`. Confirm or fallback answers trigger
 escalation. Every attempt records backend, tier, latency, and any error. If a later
@@ -225,7 +253,7 @@ and policy confidence is not an authorization boundary.
 ```bash
 pnpm softif replay --db ./soft-if.db --from 0 --backend ollama
 pnpm softif replay --db ./soft-if.db --from 2026-10-17T00:00:00Z \
-  --backend lab-clef27b --url http://your-lab-server:8080
+  --backend llamacpp --url http://localhost:8080
 pnpm softif calib --db ./soft-if.db --branch launcher.action --json
 ```
 
@@ -233,8 +261,9 @@ pnpm softif calib --db ./soft-if.db --branch launcher.action --json
 values with new decisions. Without branch records it compares noul truth under
 the supplied policy, choice keys, and rounded score levels. It returns agreement,
 flips, and an errors array, without mutating original evidence. The CLI supports
-named backend JSON profiles through `--backend-config`; a lab endpoint must be
-specified, never guessed.
+named backend JSON profiles through `--backend-config`; remote endpoints must be
+specified explicitly. The legacy `lab-clef27b` CLI alias still requires `--url`,
+`SOFTIF_LAB_URL`, or a backend profile.
 
 `calibrate(decisions, outcomes, branches, { branch, bins })` returns reliability
 bins and expected calibration error, weighted by sample count. Outcomes need
@@ -248,7 +277,7 @@ user acceptance of the prediction, not an independently verified label.
 pnpm test
 SOFTIF_LIVE=1 node --test test/regression.test.mjs
 pnpm bench --backend ollama --count 200 --question-counts 1,4,12
-pnpm bench --backend llamacpp --url http://your-lab-server:8080
+pnpm bench --backend llamacpp --url http://localhost:8080
 ```
 
 The default suite is offline. It covers recorded Clef wire data, local HTTP test
@@ -260,5 +289,10 @@ unavailable. It does not invent results for absent backends.
 Bench runs sequential requests against a repeated 1200-character state after
 warmup, reporting p50/p95 library latency for each question count and tier. Failures
 are counted and excluded from latency percentiles. This is not a keystroke-to-render
-benchmark. See the lead-owned [VALIDATION.md](./VALIDATION.md) for measured results
+benchmark. See [VALIDATION.md](./VALIDATION.md) for measured results
 and deployment limitations.
+
+## License
+
+No license has been selected. No license grant is included with this repository.
+Third-party dependencies keep their own licenses.

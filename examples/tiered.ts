@@ -24,8 +24,8 @@ const first = live
     });
 const second = live
   ? openaiEmulated({
-      url: process.env.BONSAI_URL ?? "http://127.0.0.1:9090/v1",
-      model: "bonsai-2-27b",
+      url: process.env.BONSAI_URL ?? "http://localhost:9090/v1",
+      model: process.env.BONSAI_MODEL ?? "bonsai-2-27b",
       apiKeyFile: process.env.BONSAI_API_KEY_FILE,
       thinking: false,
     })

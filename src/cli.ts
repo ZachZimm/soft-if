@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFileSync } from "node:fs";
+import { readFileSync, realpathSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { pathToFileURL } from "node:url";
 import {
@@ -25,8 +25,10 @@ softif calib --db soft-if.db [--branch launcher.action]
 softif debug --db soft-if.db [--policy policy.json] [--port 7331] [--demo]
 softif bench --backend ollama [--count 200] [--question-counts 1,4,12]
 
-Common flags: --backend fake|ollama|llamacpp|openai|lab-clef27b, --url, --model,
+Common flags: --backend fake|ollama|llamacpp|openai|bonsai|lab-clef27b, --url, --model,
 --timeout 10000, --policy FILE, --json. OpenAI also accepts --api-key-file.
+Bonsai/OpenAI defaults: BONSAI_URL or http://localhost:9090/v1,
+BONSAI_MODEL or bonsai-2-27b, BONSAI_API_KEY_FILE, OPENAI_API_KEY.
 Named backends: --backend-config FILE with {name:{type,url,model}}.
 Choice/score prompts may use 'key=Prompt?|a:description,b:description'.
 Score levels: --score 'urgency=How urgent?|later,soon,now'.
@@ -110,10 +112,10 @@ function backend(v: Values): Backend {
   }
   if (type === "openai" || type === "bonsai")
     return openaiEmulated({
-      url: url ?? "http://127.0.0.1:9090/v1",
-      model: model ?? "bonsai-2-27b",
+      url: url ?? process.env.BONSAI_URL ?? "http://localhost:9090/v1",
+      model: model ?? process.env.BONSAI_MODEL ?? "bonsai-2-27b",
       apiKey: process.env.OPENAI_API_KEY,
-      apiKeyFile: v["api-key-file"],
+      apiKeyFile: v["api-key-file"] ?? process.env.BONSAI_API_KEY_FILE,
       thinking: false,
     });
   throw new Error(`Unknown backend ${type}`);
@@ -388,7 +390,7 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
 }
 if (
   process.argv[1] &&
-  import.meta.url === pathToFileURL(process.argv[1]).href
+  import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href
 ) {
   main().catch((e) => {
     console.error(`softif: ${e instanceof Error ? e.message : String(e)}`);

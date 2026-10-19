@@ -82,7 +82,7 @@ error?:string,usage?,attempts:TierAttempt[]}`.
 
 All endpoints use JSON except HTML and SSE. Errors are `{error:string}`.
 
-- `GET /` serves the Opus-owned page.
+- `GET /` serves the debugger page.
 - `GET /health` -> `{ok:true,version:1}`.
 - `GET /snapshot?limit=200` -> `{policy,decisions:DecisionRecord[],branches:BranchRecord[],outcomes:OutcomeRecord[]}`. Arrays are oldest first, bounded to 2000.
 - `GET /events` -> SSE, named events `decision`, `branch`, `outcome`, `policy`;

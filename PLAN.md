@@ -1,9 +1,9 @@
-# soft-if — implementation plan
+# soft-if implementation plan
 
-Status: M0–M6 implemented and validated on 17 Oct 2026. See `README.md`,
+Status: M0 through M6 implemented and validated on 17 Oct 2026. See `README.md`,
 `CONTRACT.md`, and `VALIDATION.md` for integration decisions, test results,
-and deployment measurements that require real usage or the lab Clef endpoint.
-Sibling consumer: `../soft-launcher`.
+and deployment measurements that require real usage or a remote Clef endpoint.
+A consumer such as `soft-launcher` can use `file:../soft-if` from a sibling checkout.
 
 ## 1. Goal
 
@@ -11,9 +11,8 @@ A small TypeScript library that makes a decision model a first-class control-flo
 primitive: `if` becomes a noul with a threshold, `switch` becomes a choice, a graded
 rubric becomes a score. Every soft branch is logged with its full distribution, can be
 replayed against a different backend, and can be watched live in a browser with the
-thresholds exposed as dials. It is the substrate the launcher and later experiments
-(Living Board, Paperless Reflex, Lab Nervous System) are built on, so it must stay
-thin, dependency-light and boring to embed.
+thresholds exposed as dials. It supports the launcher and other applications, so it must stay
+thin, dependency-light and easy to embed.
 
 ## 2. Non-goals
 
@@ -29,24 +28,24 @@ thin, dependency-light and boring to embed.
 
 | Decision | Choice | Why |
 |---|---|---|
-| Language / runtime | TypeScript on Node 26 (present on the development host), ESM only | Shared with the launcher's web frontend; no Bun installed |
-| Package manager | pnpm 9 (present) | Workspace linking to `soft-launcher` without publishing |
+| Language / runtime | TypeScript on Node 26, ESM only | Shared with the launcher's web frontend |
+| Package manager | pnpm 9 | Local file dependencies without registry publishing |
 | Persistence | `node:sqlite` (built into Node 22.5+) | Zero native deps; the launcher reads the same file |
 | Debugger transport | `node:http` + Server-Sent Events for live data, `fetch` POST for edits | No `ws` dependency; one-way push is all the page needs |
 | Tests | `node --test` + `node:assert` | Built in |
 | Build | `tsc` to `dist/`, `exports` map, no bundler | Library, not an app |
 | Config format | JSON for policies and rubrics (TOML optional later via a tiny parser) | `JSON.parse` is free; the launcher's TOML catalogue is its own concern |
-| Primary backend for development | Ollama System One on the development host: `http://127.0.0.1:11434/v1/systemone`, model `clef-flash:9b-q8_0` (see `../clef-flash-server`) | Already being provisioned on this machine; 4,096-token context by default |
-| Secondary backend | llama.cpp `/v1/systemone` on lab once a stock build with the `clef` architecture is running | Same wire shape; different host |
-| LLM fallback backend | Bonsai-2 27B on lab, OpenAI-compatible chat at `http://127.0.0.1:9090/v1` with `response_format: json_schema`, key from `~/.config/soft-if/api-key.txt` | Tier 1.5 for the medium confidence band |
+| Primary backend for development | Local Ollama System One: `http://127.0.0.1:11434/v1/systemone`, model alias `clef-flash-q8:latest` | Requires a server with System One support and an installed model |
+| Secondary backend | llama.cpp `/v1/systemone` on a configured endpoint once a build with the `clef` architecture is running | Same wire shape; different host |
+| LLM fallback backend | Bonsai-2 27B, OpenAI-compatible chat at `BONSAI_URL` (default `http://localhost:9090/v1`) with `response_format: json_schema`, optional key file from `BONSAI_API_KEY_FILE` | Tier 1.5 for the medium confidence band |
 
 ## 4. Public API (target shape)
 
 ```ts
-import { SoftIf, noul, choice, score, ollama, openaiEmulated, tiered, Policy } from "soft-if";
+import { SoftIf, noul, choice, score, ollama, openaiEmulated, tiered, Policy } from "soft-if/node";
 
-const s1 = ollama({ url: "http://127.0.0.1:11434", model: "clef-flash:9b-q8_0" });
-const s15 = openaiEmulated({ url: "http://127.0.0.1:9090/v1", model: "bonsai-2-27b", apiKeyFile: "~/.config/soft-if/api-key.txt", thinking: false });
+const s1 = ollama({ url: "http://127.0.0.1:11434", model: "clef-flash-q8:latest" });
+const s15 = openaiEmulated({ url: process.env.BONSAI_URL ?? "http://localhost:9090/v1", model: process.env.BONSAI_MODEL ?? "bonsai-2-27b", apiKeyFile: process.env.BONSAI_API_KEY_FILE, thinking: false });
 
 const policy = Policy.fromFile("./policy.json", { watch: true }); // bands + per-branch overrides, hot reload
 
@@ -186,7 +185,7 @@ M5 — Replay and calibration (one day)
 - `replay.ts`: re-run a time range of logged requests against another backend,
   report branch flips and agreement rate. `calibration.ts`: reliability bins and ECE
   per branch from `outcomes`.
-- Accept: `softif replay --from <ts> --backend lab-clef27b` prints a flip table;
+- Accept: `softif replay --from <ts> --backend llamacpp --url http://localhost:8080` prints a flip table;
   `softif calib --branch launcher.action` prints bins; both have tests on canned data.
 
 M6 — Docs and examples (half a day)
@@ -200,7 +199,7 @@ M6 — Docs and examples (half a day)
 - Unit tests use `fake.ts` and recorded JSON fixtures from the real servers.
 - Integration tests are gated by `SOFTIF_LIVE=1` and skip when the server is down.
 - A `bench` script measures keystroke-loop latency: 200 sequential decisions with a
-  ~300-token state, reporting p50/p95 for Ollama on the development host and llama.cpp on lab.
+  ~300-token state, reporting p50/p95 for local Ollama and a configured llama.cpp server.
 
 ## 9. Metrics to record in VALIDATION.md
 
